@@ -1,7 +1,7 @@
 _base_ = [
     '../_base_/models/retinanet_r50_fpn.py',
     '../_base_/datasets/vessel_detection.py',
-    '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
+    '../_base_/schedules/schedule_240.py', '../_base_/default_runtime.py'
 ]
 
 
@@ -16,8 +16,8 @@ optim_wrapper = dict(
 
 
 train_dataloader = dict(
-    batch_size=6,
-    num_workers=6,
+    batch_size=4,
+    num_workers=4,
     )
 
 # TODO: support auto scaling lr

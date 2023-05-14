@@ -16,6 +16,7 @@ from mmcv.transforms.utils import avoid_cache_randomness, cache_randomness
 from mmengine.dataset import BaseDataset
 from mmengine.utils import is_str
 from numpy import random
+from skimage import exposure
 
 from mmdet.registry import TRANSFORMS
 from mmdet.structures.bbox import HorizontalBoxes, autocast_box_type
@@ -36,6 +37,42 @@ except ImportError:
 
 Number = Union[int, float]
 
+@TRANSFORMS.register_module()
+class CLAHE:
+    """Applies the Contrast Limited Adaptive Histogram Equalization (CLAHE) to images.
+
+    This transform applies the CLAHE operation on the input image in the YUV color space 
+    to enhance its contrast.
+
+    Required Keys:
+    - img (np.array): the input image.
+
+    Modified Keys:
+    - img (np.array): the output image after applying CLAHE.
+
+    Args:
+        clip_limit (float): Threshold for contrast limiting. Defaults to 2.0.
+        tile_grid_size (tuple[int]): Size of grid for histogram equalization. Input image will 
+            be divided into equally sized rectangular tiles. Defaults to (8,8).
+    """
+    
+    def __init__(self, clip_limit=2.0, tile_grid_size=(8,8)):
+        self.clip_limit = clip_limit
+        self.tile_grid_size = tile_grid_size
+
+    def __call__(self, results):
+        img = results['img']
+        img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
+        img_yuv[:,:,0] = exposure.equalize_adapthist(img_yuv[:,:,0], self.tile_grid_size, clip_limit=self.clip_limit)
+        img_output = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
+        results['img'] = img_output
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(clip_limit={self.clip_limit}, '
+        repr_str += f'tile_grid_size={self.tile_grid_size})'
+        return repr_str
 
 @TRANSFORMS.register_module()
 class Resize(MMCV_Resize):

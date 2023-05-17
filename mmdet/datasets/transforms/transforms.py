@@ -5,6 +5,7 @@ import math
 from typing import List, Optional, Sequence, Tuple, Union
 
 import cv2
+import clahe
 import mmcv
 import numpy as np
 from mmcv.image.geometric import _scale_size
@@ -37,6 +38,91 @@ except ImportError:
 
 Number = Union[int, float]
 
+
+
+@TRANSFORMS.register_module()
+class ByteScale:
+    """
+    Applies byte scaling to an image array, converting 16-bit values to 8-bit.
+
+    This transformation performs byte scaling on the input image array, converting
+    the 16-bit values to 8-bit values. It calculates the scaling factors based on
+    the minimum and maximum values of the image and applies the scaling and shifting
+    operations to achieve the desired output range.
+
+    Args:
+        out_range (tuple[int]): The desired output range for the byte-scaled image.
+            Defaults to (0, 255).
+
+    Example:
+        >>> input_image = np.array([[1000, 2000, 3000], [4000, 5000, 6000]], dtype=np.uint16)
+        >>> transformer = ByteScale(out_range=(0, 127))
+        >>> results = {'img': input_image}
+        >>> results = transformer(results)
+        >>> output_image = results['img']
+        >>> print(output_image)
+        [[  0  42  85]
+         [127 149 170]]
+
+    """
+    
+    def __init__(self, out_range=(0, 255)):
+        self.out_range = out_range
+
+    # def __call__(self, results):
+    #     img = results['img']
+        
+    #     # Calculate the minimum and maximum values of the image
+    #     min_val = img.min()
+    #     max_val = img.max()
+        
+    #     # Calculate the scaling factors
+    #     scale_factor = (self.out_range[1] - self.out_range[0]) / (max_val - min_val)
+    #     shift = self.out_range[0] - scale_factor * min_val
+        
+    #     # Apply the scaling and shifting to the image
+    #     img_output = (img * scale_factor + shift).astype('uint8')
+        
+    #     results['img'] = img_output
+        
+    #     return results
+    
+
+    def __call__(self, results, cdf_min_percentile=1.1, cdf_max_percentile=100):
+        img = results['img'].astype('float32')
+        img = img / 10000        
+        # flattens arr
+        flat_arr = img.reshape(-1)
+
+        # Compute the cumulative histogram of the flattened array
+        hist, bins = np.histogram(flat_arr, bins=256, range=(0, 1))
+        cum_hist = hist.cumsum()
+
+        # Normalize the cumulative histogram
+        cum_hist_normalized = cum_hist / cum_hist[-1]
+
+        # Calculate the minimum and maximum CDF values based on percentiles
+        cdf_min = np.percentile(cum_hist_normalized, cdf_min_percentile)
+        cdf_max = np.percentile(cum_hist_normalized, cdf_max_percentile)
+        # Map the equalized values to the original array within the specified CDF range
+        equalized_arr = np.interp(flat_arr, bins[:-1], (cum_hist_normalized - cdf_min) / (cdf_max - cdf_min))
+
+        # Clip values outside of the range 0-1
+        equalized_arr = np.clip(equalized_arr, 0, 1)
+
+        # Reshape the equalized array back to the original shape
+        equalized_arr = equalized_arr.reshape(img.shape)
+        
+        results['img'] = equalized_arr
+        
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(out_range={self.out_range})'
+        return repr_str
+
+
 @TRANSFORMS.register_module()
 class CLAHE:
     """Applies the Contrast Limited Adaptive Histogram Equalization (CLAHE) to images.
@@ -56,16 +142,20 @@ class CLAHE:
             be divided into equally sized rectangular tiles. Defaults to (8,8).
     """
     
-    def __init__(self, clip_limit=2.0, tile_grid_size=(8,8)):
+    def __init__(self, clip_limit=2.0, tile_grid_size=(512,512)):
         self.clip_limit = clip_limit
         self.tile_grid_size = tile_grid_size
 
     def __call__(self, results):
         img = results['img']
-        img_yuv = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
-        img_yuv[:,:,0] = exposure.equalize_adapthist(img_yuv[:,:,0], self.tile_grid_size, clip_limit=self.clip_limit)
-        img_output = cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
-        results['img'] = img_output
+        # grad_clip img
+        img = np.clip(img, 0, 600)
+        im_a = clahe.clahe(img[:,:,2], clip_limit=self.clip_limit, win_shape=self.tile_grid_size)
+        im_b = clahe.clahe(img[:,:,1], clip_limit=self.clip_limit, win_shape=self.tile_grid_size)
+        im_c = clahe.clahe(img[:,:,0], clip_limit=self.clip_limit, win_shape=self.tile_grid_size)
+        img_output = np.dstack((im_a, im_b, im_c))
+        results['img'] = (img_output*255).astype(np.uint8)
+        # results['img'] = img_output
         return results
 
     def __repr__(self):

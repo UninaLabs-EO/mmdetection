@@ -25,16 +25,23 @@ def manage_checkpoints(workdir):
     scalars = list(Path(workdir).glob('**/scalars.json'))
 
     data = pd.read_json(scalars[0], lines=True)
+    try:
+        row = data[data['coco/bbox_mAP_50'] == data['coco/bbox_mAP_50'].max()]
+        step, value = row['step'].values[0], row['coco/bbox_mAP_50'].values[0]
+        print(step, value)
 
-    row = data[data['coco/bbox_mAP_50'] == data['coco/bbox_mAP_50'].max()]
-    step, value = row['step'].values[0], row['coco/bbox_mAP_50'].values[0]
-    print(step, value)
-
-    for p in pesi:
-        nome = p.name
-        if nome != f'epoch_{step}.pth':
+        for p in pesi:
+            nome = p.name
+            if nome != f'epoch_{step}.pth':
+                print(f"Deleting {nome}")
+                os.remove(p)
+    # if the JSON file is empty, print a message
+    except:
+        print("No mAPs found!")
+        for p in pesi:
             print(f"Deleting {nome}")
             os.remove(p)
+        
 
 
 def plot_checkpoints(workdir):

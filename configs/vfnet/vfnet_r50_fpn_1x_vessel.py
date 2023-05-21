@@ -1,13 +1,13 @@
 _base_ = [
     '../_base_/datasets/vessel_detection.py',
-    '../_base_/schedules/schedule_240.py', '../_base_/default_runtime.py'
+    '../_base_/schedules/schedule_520.py', '../_base_/default_runtime.py'
 ]
 # model settings
 model = dict(
     type='VFNet',
     data_preprocessor=dict(
         type='DetDataPreprocessor',
-        mean=[200, 154, 116], # [123.675, 116.28, 103.53]
+        mean=[200, 154, 116],
         std=[22, 24, 27],
         bgr_to_rgb=False,
         pad_size_divisor=32),

@@ -1,7 +1,5 @@
 _base_ = [
-    '../_base_/models/retinanet_r50_fpn.py',
-    '../_base_/datasets/vessel_detection.py',
-    '../_base_/schedules/schedule_240.py', '../_base_/default_runtime.py'
+    '../retinanet/retinanet_r50_fpn_1x_vessel.py',
 ]
 
 

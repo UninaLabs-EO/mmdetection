@@ -1,21 +1,21 @@
 _base_ = [
     '../_base_/models/retinanet_r50_fpn.py',
-    '../_base_/schedules/schedule_1x.py',
-    '../_base_/datasets/coco_detection.py', '../_base_/default_runtime.py'
+    '../_base_/schedules/schedule_240.py',
+    '../_base_/datasets/vessel_detection.py', '../_base_/default_runtime.py'
 ]
 
-image_size = (896, 896)
+image_size = (2048, 2048)
 batch_augments = [dict(type='BatchFixedSizePad', size=image_size)]
 norm_cfg = dict(type='BN', requires_grad=True)
 checkpoint = 'https://download.openmmlab.com/mmclassification/v0/efficientnet/efficientnet-b3_3rdparty_8xb32-aa_in1k_20220119-5b4887a0.pth'  # noqa
 model = dict(
     data_preprocessor=dict(
         type='DetDataPreprocessor',
-        mean=[123.675, 116.28, 103.53],
-        std=[58.395, 57.12, 57.375],
+        mean=[200, 154, 116], # [123.675, 116.28, 103.53]
+        std=[22, 24, 27],
         bgr_to_rgb=True,
         pad_size_divisor=32,
-        batch_augments=batch_augments),
+        batch_augments=None),
     backbone=dict(
         _delete_=True,
         type='EfficientNet',
@@ -39,56 +39,25 @@ model = dict(
     # training and testing settings
     train_cfg=dict(assigner=dict(neg_iou_thr=0.5)))
 
-# dataset settings
-train_pipeline = [
-    dict(type='LoadImageFromFile', backend_args={{_base_.backend_args}}),
-    dict(type='LoadAnnotations', with_bbox=True),
-    dict(
-        type='RandomResize',
-        scale=image_size,
-        ratio_range=(0.8, 1.2),
-        keep_ratio=True),
-    dict(type='RandomCrop', crop_size=image_size),
-    dict(type='RandomFlip', prob=0.5),
-    dict(type='PackDetInputs')
-]
-test_pipeline = [
-    dict(type='LoadImageFromFile', backend_args={{_base_.backend_args}}),
-    dict(type='Resize', scale=image_size, keep_ratio=True),
-    dict(type='LoadAnnotations', with_bbox=True),
-    dict(
-        type='PackDetInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor'))
-]
-train_dataloader = dict(
-    batch_size=4, num_workers=4, dataset=dict(pipeline=train_pipeline))
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-test_dataloader = val_dataloader
-
-# optimizer
-optim_wrapper = dict(
-    optimizer=dict(lr=0.04),
-    paramwise_cfg=dict(norm_decay_mult=0, bypass_duplicate=True))
-
-# learning policy
-max_epochs = 12
-param_scheduler = [
-    dict(type='LinearLR', start_factor=0.1, by_epoch=False, begin=0, end=1000),
-    dict(
-        type='MultiStepLR',
-        begin=0,
-        end=max_epochs,
-        by_epoch=True,
-        milestones=[8, 11],
-        gamma=0.1)
-]
-train_cfg = dict(max_epochs=max_epochs)
-
-# cudnn_benchmark=True can accelerate fix-size training
-env_cfg = dict(cudnn_benchmark=True)
-
-# NOTE: `auto_scale_lr` is for automatically scaling LR,
-# USER SHOULD NOT CHANGE ITS VALUES.
-# base_batch_size = (8 GPUs) x (4 samples per GPU)
-auto_scale_lr = dict(base_batch_size=32)
+# # dataset settings
+# train_pipeline = [
+#     dict(type='LoadImageFromFile', backend_args={{_base_.backend_args}}),
+#     dict(type='LoadAnnotations', with_bbox=True),
+#     dict(
+#         type='RandomResize',
+#         scale=image_size,
+#         ratio_range=(0.8, 1.2),
+#         keep_ratio=True),
+#     dict(type='RandomCrop', crop_size=image_size),
+#     dict(type='RandomFlip', prob=0.5),
+#     dict(type='PackDetInputs')
+# ]
+# test_pipeline = [
+#     dict(type='LoadImageFromFile', backend_args={{_base_.backend_args}}),
+#     dict(type='Resize', scale=image_size, keep_ratio=True),
+#     dict(type='LoadAnnotations', with_bbox=True),
+#     dict(
+#         type='PackDetInputs',
+#         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+#                    'scale_factor'))
+# ]

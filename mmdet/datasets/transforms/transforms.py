@@ -87,34 +87,70 @@ class ByteScale:
         
     #     return results
     
+    def redistribute_data(self, arr):
+        return 2*(arr-0.5)
+    
 
-    def __call__(self, results, cdf_min_percentile=1.1, cdf_max_percentile=100):
+    def __call__(self, results, cdf_min_percentile=0.5, cdf_max_percentile=100):
+        
         img = results['img'].astype('float32')
-        img = img / 10000        
-        # flattens arr
-        flat_arr = img.reshape(-1)
-
-        # Compute the cumulative histogram of the flattened array
-        hist, bins = np.histogram(flat_arr, bins=256, range=(0, 1))
-        cum_hist = hist.cumsum()
-
-        # Normalize the cumulative histogram
-        cum_hist_normalized = cum_hist / cum_hist[-1]
-
-        # Calculate the minimum and maximum CDF values based on percentiles
-        cdf_min = np.percentile(cum_hist_normalized, cdf_min_percentile)
-        cdf_max = np.percentile(cum_hist_normalized, cdf_max_percentile)
-        # Map the equalized values to the original array within the specified CDF range
-        equalized_arr = np.interp(flat_arr, bins[:-1], (cum_hist_normalized - cdf_min) / (cdf_max - cdf_min))
-
-        # Clip values outside of the range 0-1
-        equalized_arr = np.clip(equalized_arr, 0, 1)
-
-        # Reshape the equalized array back to the original shape
-        equalized_arr = equalized_arr.reshape(img.shape)
         
-        results['img'] = equalized_arr
+        # choice norm:
+        choice = 3 # 0: equalize, 1: norm, 2: clahe, 3: clip
+        if choice == 0:
+            # print('Choice 0: printing img min and max')
+            # print(img.min(), img.max())
+            img = np.clip(img, 0, 10000)
+            img = img / 10000        
+            # flattens arr
+            flat_arr = img.reshape(-1)
+            # Compute the cumulative histogram of the flattened array
+            hist, bins = np.histogram(flat_arr, bins=256, range=(0, 1))
+            cum_hist = hist.cumsum()
+            # Normalize the cumulative histogram
+            cum_hist_normalized = cum_hist / cum_hist[-1]
+            # Calculate the minimum and maximum CDF values based on percentiles
+            cdf_min = np.percentile(cum_hist_normalized, cdf_min_percentile)
+            cdf_max = np.percentile(cum_hist_normalized, cdf_max_percentile)
+            # Map the equalized values to the original array within the specified CDF range
+            equalized_arr = np.interp(flat_arr, bins[:-1], (cum_hist_normalized - cdf_min) / (cdf_max - cdf_min))
+            # Clip values outside of the range 0-1
+            equalized_arr = np.clip(equalized_arr, 0, 1)
+            # Reshape the equalized array back to the original shape
+            equalized_arr = equalized_arr.reshape(img.shape)
+            
+            correct_format_img = (equalized_arr - equalized_arr.mean()) / equalized_arr.std()
+            correct_format_img = self.redistribute_data(correct_format_img)
         
+        elif choice == 1:
+            correct_format_img = (img - img.mean()) / img.std()
+            print('printing img min and max')
+            print(img.min(), img.max())
+            
+        elif choice == 2:
+            # grad_clip img
+            img = np.clip(img, 0, 600)
+            im_a = clahe.clahe(img[:,:,2], clip_limit=6, win_shape=(16,16))
+            im_b = clahe.clahe(img[:,:,1], clip_limit=6, win_shape=(16,16))
+            im_c = clahe.clahe(img[:,:,0], clip_limit=6, win_shape=(16,16))
+            correct_format_img = np.dstack((im_a, im_b, im_c))
+            correct_format_img = (correct_format_img - correct_format_img.mean()) / correct_format_img.std()
+        
+        elif choice == 3:
+            img = np.clip(img, 0, 1000)
+            # a,b,c = img[:,:,0], img[:,:,1], img[:,:,2]
+            
+            # sigma = 5
+            # a = (a - 200) / (sigma*22)
+            # b = (b - 154) / (sigma*24)
+            # c = (c - 116) / (sigma*27)
+            
+            # img = np.dstack((a,b,c))
+            # print(img.min(), img.max())
+            # correct_format_img = np.clip(img, -1, 1)
+            correct_format_img = img / 1000
+        
+        results['img'] = correct_format_img
         return results
 
     def __repr__(self):

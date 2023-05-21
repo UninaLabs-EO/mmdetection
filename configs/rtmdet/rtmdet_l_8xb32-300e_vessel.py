@@ -1,9 +1,9 @@
 _base_ = [
-    '../_base_/default_runtime.py', '../_base_/schedules/schedule_1x.py',
+    '../_base_/default_runtime.py', '../_base_/schedules/schedule_240.py',
     '../_base_/datasets/vessel_detection.py', './rtmdet_tta.py'
 ]
 
-IMG_SCALE=(1024, 1024)
+IMG_SCALE=(2024, 2024)
 
 model = dict(
     type='RTMDet',

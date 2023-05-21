@@ -1,9 +1,9 @@
 _base_ = [
-    '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py',
-    './yolox_tta.py'
+    '../_base_/schedules/schedule_240.py', '../_base_/default_runtime.py',
+    './yolox_tta.py', '../_base_/datasets/vessel_detection.py',
 ]
 
-img_scale = (640, 640)  # width, height
+img_scale = (2048, 2048)  # width, height
 
 # model settings
 model = dict(
@@ -14,7 +14,7 @@ model = dict(
         batch_augments=[
             dict(
                 type='BatchSyncRandomResize',
-                random_size_range=(480, 800),
+                random_size_range=(1600, 1856),
                 size_divisor=32,
                 interval=10)
         ]),
@@ -39,7 +39,7 @@ model = dict(
         act_cfg=dict(type='Swish')),
     bbox_head=dict(
         type='YOLOXHead',
-        num_classes=80,
+        num_classes=1,
         in_channels=128,
         feat_channels=128,
         stacked_convs=2,
@@ -70,8 +70,8 @@ model = dict(
     test_cfg=dict(score_thr=0.01, nms=dict(type='nms', iou_threshold=0.65)))
 
 # dataset settings
-data_root = 'data/coco/'
-dataset_type = 'CocoDataset'
+# data_root = 'data/coco/'
+# dataset_type = 'CocoDataset'
 
 # Example to use different file client
 # Method 1: simply set the data root and let the file I/O module
@@ -118,64 +118,64 @@ train_pipeline = [
     dict(type='PackDetInputs')
 ]
 
-train_dataset = dict(
-    # use MultiImageMixDataset wrapper to support mosaic and mixup
-    type='MultiImageMixDataset',
-    dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file='annotations/instances_train2017.json',
-        data_prefix=dict(img='train2017/'),
-        pipeline=[
-            dict(type='LoadImageFromFile', backend_args=backend_args),
-            dict(type='LoadAnnotations', with_bbox=True)
-        ],
-        filter_cfg=dict(filter_empty_gt=False, min_size=32),
-        backend_args=backend_args),
-    pipeline=train_pipeline)
+# train_dataset = dict(
+#     # use MultiImageMixDataset wrapper to support mosaic and mixup
+#     type='MultiImageMixDataset',
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         ann_file='annotations/instances_train2017.json',
+#         data_prefix=dict(img='train2017/'),
+#         pipeline=[
+#             dict(type='LoadImageFromFile', backend_args=backend_args),
+#             dict(type='LoadAnnotations', with_bbox=True)
+#         ],
+#         filter_cfg=dict(filter_empty_gt=False, min_size=32),
+#         backend_args=backend_args),
+#     pipeline=train_pipeline)
 
-test_pipeline = [
-    dict(type='LoadImageFromFile', backend_args=backend_args),
-    dict(type='Resize', scale=img_scale, keep_ratio=True),
-    dict(
-        type='Pad',
-        pad_to_square=True,
-        pad_val=dict(img=(114.0, 114.0, 114.0))),
-    dict(type='LoadAnnotations', with_bbox=True),
-    dict(
-        type='PackDetInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor'))
-]
+# test_pipeline = [
+#     dict(type='LoadImageFromFile', backend_args=backend_args),
+#     dict(type='Resize', scale=img_scale, keep_ratio=True),
+#     dict(
+#         type='Pad',
+#         pad_to_square=True,
+#         pad_val=dict(img=(114.0, 114.0, 114.0))),
+#     dict(type='LoadAnnotations', with_bbox=True),
+#     dict(
+#         type='PackDetInputs',
+#         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+#                    'scale_factor'))
+# ]
 
-train_dataloader = dict(
-    batch_size=8,
-    num_workers=4,
-    persistent_workers=True,
-    sampler=dict(type='DefaultSampler', shuffle=True),
-    dataset=train_dataset)
-val_dataloader = dict(
-    batch_size=8,
-    num_workers=4,
-    persistent_workers=True,
-    drop_last=False,
-    sampler=dict(type='DefaultSampler', shuffle=False),
-    dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file='annotations/instances_val2017.json',
-        data_prefix=dict(img='val2017/'),
-        test_mode=True,
-        pipeline=test_pipeline,
-        backend_args=backend_args))
-test_dataloader = val_dataloader
+# train_dataloader = dict(
+#     batch_size=8,
+#     num_workers=4,
+#     persistent_workers=True,
+#     sampler=dict(type='DefaultSampler', shuffle=True),
+#     dataset=train_dataset)
+# val_dataloader = dict(
+#     batch_size=8,
+#     num_workers=4,
+#     persistent_workers=True,
+#     drop_last=False,
+#     sampler=dict(type='DefaultSampler', shuffle=False),
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         ann_file='annotations/instances_val2017.json',
+#         data_prefix=dict(img='val2017/'),
+#         test_mode=True,
+#         pipeline=test_pipeline,
+#         backend_args=backend_args))
+# test_dataloader = val_dataloader
 
-val_evaluator = dict(
-    type='CocoMetric',
-    ann_file=data_root + 'annotations/instances_val2017.json',
-    metric='bbox',
-    backend_args=backend_args)
-test_evaluator = val_evaluator
+# val_evaluator = dict(
+#     type='CocoMetric',
+#     ann_file=data_root + 'annotations/instances_val2017.json',
+#     metric='bbox',
+#     backend_args=backend_args)
+# test_evaluator = val_evaluator
 
 # training settings
 max_epochs = 300

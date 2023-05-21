@@ -2,9 +2,9 @@ default_scope = 'mmdet'
 
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
-    logger=dict(type='LoggerHook', interval=10),
+    logger=dict(type='LoggerHook', interval=1),
     param_scheduler=dict(type='ParamSchedulerHook'),
-    checkpoint=dict(type='CheckpointHook', interval=1),
+    checkpoint=dict(type='CheckpointHook', interval=1, save_best='coco/bbox_mAP_50', max_keep_ckpts=2),
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='DetVisualizationHook'))
 
@@ -14,7 +14,14 @@ env_cfg = dict(
     dist_cfg=dict(backend='nccl'),
 )
 
-vis_backends = [dict(type='LocalVisBackend')]
+
+wanb_cfg = dict(type='WandbVisBackend',
+                init_kwargs={
+                    'project': 'S2RAWVessel', #'group': 'generic_name',
+                })
+
+vis_backends = [dict(type='LocalVisBackend'),
+                wanb_cfg]
 visualizer = dict(
     type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)

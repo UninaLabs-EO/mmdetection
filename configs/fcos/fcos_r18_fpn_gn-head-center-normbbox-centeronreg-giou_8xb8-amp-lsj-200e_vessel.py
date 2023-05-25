@@ -1,6 +1,6 @@
 _base_ = [
-    '../_base_/datasets/coco_detection.py',
-    '../_base_/schedules/schedule_520.py', '../_base_/default_runtime.py'
+    '../_base_/datasets/vessel_detection.py',
+    '../_base_/schedules/schedule_240.py', '../_base_/default_runtime.py'
 ]
 
 
@@ -8,14 +8,13 @@ image_size = (2048, 2048)
 # batch_augments = [dict(type='BatchFixedSizePad', size=image_size)]
 batch_augments = None
 
-
 # model settings
 model = dict(
     type='FCOS',
     data_preprocessor=dict(
         type='DetDataPreprocessor',
-        mean=[200, 154, 116], # [123.675, 116.28, 103.53]
-        std=[22, 24, 27],
+        mean=[0, 0, 0], # [123.675, 116.28, 103.53]
+        std=[1, 1, 1],
         bgr_to_rgb=True,
         pad_size_divisor=32,
         batch_augments=batch_augments),

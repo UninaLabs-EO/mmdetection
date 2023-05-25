@@ -2,9 +2,9 @@ default_scope = 'mmdet'
 
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
-    logger=dict(type='LoggerHook', interval=1),
+    logger=dict(type='LoggerHook', interval=10),
     param_scheduler=dict(type='ParamSchedulerHook'),
-    checkpoint=dict(type='CheckpointHook', interval=1, save_best='coco/bbox_mAP_50', max_keep_ckpts=2),
+    checkpoint=dict(type='CheckpointHook', interval=1, save_best=r'coco/bbox_mAP_50', max_keep_ckpts=1, save_last=False),
     sampler_seed=dict(type='DistSamplerSeedHook'),
     visualization=dict(type='DetVisualizationHook'))
 

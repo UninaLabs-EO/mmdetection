@@ -103,6 +103,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Call the function with the directory path
-    manage_checkpoints(args.workdir)
+    # manage_checkpoints(args.workdir)
     plot_checkpoints(args.workdir)
 

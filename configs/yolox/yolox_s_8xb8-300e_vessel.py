@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/schedules/schedule_240.py', '../_base_/default_runtime.py',
-    './yolox_tta.py', '../_base_/datasets/vessel_detection.py',
+    './yolox_tta.py', '../_base_/datasets/vessel_detection.py', 
 ]
 
 img_scale = (2048, 2048)  # width, height
@@ -182,7 +182,7 @@ max_epochs = 300
 num_last_epochs = 15
 interval = 10
 
-train_cfg = dict(max_epochs=max_epochs, val_interval=interval)
+# train_cfg = dict(max_epochs=max_epochs, val_interval=interval)
 
 # optimizer
 # default 8 gpu
@@ -224,11 +224,11 @@ param_scheduler = [
     )
 ]
 
-default_hooks = dict(
-    checkpoint=dict(
-        interval=interval,
-        max_keep_ckpts=3  # only keep latest 3 checkpoints
-    ))
+# default_hooks = dict(
+#     checkpoint=dict(
+#         interval=interval,
+#         max_keep_ckpts=3  # only keep latest 3 checkpoints
+#     ))
 
 custom_hooks = [
     dict(

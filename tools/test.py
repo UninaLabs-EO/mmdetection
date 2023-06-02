@@ -53,6 +53,8 @@ def parse_args():
         default='none',
         help='job launcher')
     parser.add_argument('--tta', action='store_true')
+    parser.add_argument('--custom', action='store_true')
+    parser.add_argument('--run_name', default=None)
     # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
     # will pass the `--local-rank` parameter to `tools/train.py` instead
     # of `--local_rank`.
@@ -90,6 +92,61 @@ def main():
     if args.show or args.show_dir:
         cfg = trigger_visualization_hook(cfg, args)
 
+    if args.custom:
+        cfg.test_dataloader = dict(
+                    batch_size=1,
+                    num_workers=2,
+                    persistent_workers=True,
+                    drop_last=False,
+                    sampler=dict(type='DefaultSampler', shuffle=False),
+                    dataset=dict(
+                        type='CocoDataset',
+                        data_root='data/vessels/',
+                        metainfo=dict(classes=('vessel', ), palette=[(220, 20, 60)]),
+                        ann_file='annotations/test.json',
+                        data_prefix=dict(img='imgs/'),
+                        test_mode=True,
+                        filter_cfg=dict(filter_empty_gt=True),
+                        pipeline=[
+                            dict(
+                                type='LoadImageFromFile',
+                                to_float32=True,
+                                color_type='color',
+                                imdecode_backend='tifffile',
+                                backend_args=None),
+                            dict(type='Resize', scale=(2048, 2048), keep_ratio=True),
+                            dict(type='LoadAnnotations', with_bbox=True),
+                            dict(
+                                type='PackDetInputs',
+                                meta_keys=('img_path', 'img_id', 'seg_map_path', 
+                                        'height', 'width', 'instances', 'sample_idx', 
+                                        'img', 'img_shape', 'ori_shape', 'scale', 'scale_factor', 
+                                        'keep_ratio', 'homography_matrix', 'gt_bboxes', 'gt_ignore_flags', 
+                                        'gt_bboxes_labels'))
+                        ],
+                        backend_args=None))
+        
+        cfg.test_evaluator = dict(
+                    type='CocoMetric',
+                    metric='bbox',
+                    format_only=False,
+                    ann_file='data/vessels/annotations/test.json',
+                    outfile_prefix='./work_dirs/vessel_detection/test')
+        
+        if args.run_name is not None:
+            wanb_cfg = dict(type='WandbVisBackend',
+                    init_kwargs={
+                        'project': 'S2RAWVessel_TestMode',
+                        'group': args.run_name,
+                    })
+
+            vis_backends = [dict(type='LocalVisBackend'),
+                            wanb_cfg]
+            cfg.visualizer = dict(
+                type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+        
+        
+        
     if args.tta:
 
         if 'tta_model' not in cfg:

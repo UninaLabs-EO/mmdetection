@@ -17,7 +17,8 @@ env_cfg = dict(
 
 wanb_cfg = dict(type='WandbVisBackend',
                 init_kwargs={
-                    'project': 'S2RAWVessel', #'group': 'generic_name',
+                    'project': 'S2RAWVessel',
+                    'group': 'generic_name',
                 })
 
 vis_backends = [dict(type='LocalVisBackend'),

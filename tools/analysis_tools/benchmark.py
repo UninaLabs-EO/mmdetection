@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument(
         '--max-iter', type=int, default=2000, help='num of max iter')
     parser.add_argument(
-        '--log-interval', type=int, default=50, help='interval of logging')
+        '--log-interval', type=int, default=1, help='interval of logging')
     parser.add_argument(
         '--num-warmup', type=int, default=5, help='Number of warmup')
     parser.add_argument(

@@ -58,7 +58,7 @@ train_dataloader = dict(
         metainfo=metainfo,
         ann_file='annotations/train.json',
         data_prefix=dict(img='imgs/'),
-        filter_cfg=dict(filter_empty_gt=True, min_size=32),
+        filter_cfg=dict(filter_empty_gt=True), # , min_size=32
         pipeline=train_pipeline,
         backend_args=backend_args))
 val_dataloader = dict(
@@ -76,17 +76,6 @@ val_dataloader = dict(
         test_mode=True,
         pipeline=test_pipeline,
         backend_args=backend_args))
-test_dataloader = val_dataloader
-
-val_evaluator = dict(
-    type='CocoMetric',
-    ann_file=data_root + 'annotations/val.json',
-    metric='bbox',
-    format_only=False,
-    backend_args=backend_args)
-
-# test_evaluator = val_evaluator
-# inference on test dataset and
 # format the output results for submission.
 test_dataloader = dict(
     batch_size=1,
@@ -102,6 +91,13 @@ test_dataloader = dict(
         data_prefix=dict(img='imgs/'),
         test_mode=True,
         pipeline=test_pipeline))
+
+val_evaluator = dict(
+    type='CocoMetric',
+    ann_file=data_root + 'annotations/val.json',
+    metric='bbox',
+    format_only=False,
+    backend_args=backend_args)
 test_evaluator = dict(
     type='CocoMetric',
     metric='bbox',

@@ -51,6 +51,7 @@ def parse_args():
     # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
     # will pass the `--local-rank` parameter to `tools/train.py` instead
     # of `--local_rank`.
+    parser.add_argument('--run_name', default=None)
     parser.add_argument('--local_rank', '--local-rank', type=int, default=0)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
@@ -96,6 +97,19 @@ def main():
             cfg.optim_wrapper.type = 'AmpOptimWrapper'
             cfg.optim_wrapper.loss_scale = 'dynamic'
 
+    # customize run name
+    if args.run_name is not None:
+        wanb_cfg = dict(type='WandbVisBackend',
+                init_kwargs={
+                    'project': 'S2RAWVessel_v2',
+                    'group': args.run_name,
+                })
+
+        vis_backends = [dict(type='LocalVisBackend'),
+                        wanb_cfg]
+        cfg.visualizer = dict(
+            type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+    
     # enable automatically scaling LR
     if args.auto_scale_lr:
         if 'auto_scale_lr' in cfg and \

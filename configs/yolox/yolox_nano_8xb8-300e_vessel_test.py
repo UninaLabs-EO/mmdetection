@@ -9,4 +9,3 @@ model = dict(
         num_csp_blocks=1,
         use_depthwise=True),
     bbox_head=dict(in_channels=64, feat_channels=64, use_depthwise=True))
-

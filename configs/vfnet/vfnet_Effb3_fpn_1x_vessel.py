@@ -7,8 +7,7 @@ norm_cfg = dict(type='BN', requires_grad=True)
 
 # model
 model = dict(
-    _delete_=True,
-    backbone=dict(
+        backbone=dict(
         _delete_=True,
         type='EfficientNet',
         arch='b3',

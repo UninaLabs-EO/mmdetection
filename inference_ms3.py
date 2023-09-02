@@ -108,8 +108,8 @@ def get_annotations_from_coco_json(coco_json_file, image_filename):
 loader = LoadImageFromFile(to_float32=False, color_type='color', imdecode_backend='pillow', backend_args=None)
 
 # Specify the path to model config and checkpoint file
-config_file = '/home/roberto/PythonProjects/S2RAWVessel/checkpoints/MS3/vfnet_r50_fpn_1x_ms3/20230901_112855_LR_{0.0001}_BATCH_{6}/vfnet_r50_fpn_1x_ms3.py'
-foldPath = Path('/home/roberto/PythonProjects/S2RAWVessel/checkpoints/MS3/vfnet_r50_fpn_1x_ms3/20230901_112855_LR_{0.0001}_BATCH_{6}/')
+config_file = '/home/roberto/PythonProjects/S2RAWVessel/checkpoints/S2RAW/cascade-mask-rcnn_r50_fpn_240_vessel/20230713_160233_0.0005/cascade-mask-rcnn_r50_fpn_240_vessel.py'
+foldPath = Path(config_file).parent
 # list all file sin folderpath:
 chkpts = list(foldPath.glob('*.pth'))
 checkpoint_file = [x for x in chkpts if 'best' in x.name][0].as_posix()
@@ -117,6 +117,37 @@ print(checkpoint_file)
 print('Loading checkpoint: ', checkpoint_file)
 # Build the model from a config file and a checkpoint file
 model = init_detector(config_file, checkpoint_file, device='cuda:0')
+
+data_root = '/home/roberto/PythonProjects/S2RAWVessel/mmdetection/data/MS3/'
+model.cfg.test_dataloader = dict(
+                    batch_size=1,
+                    num_workers=2,
+                    persistent_workers=True,
+                    drop_last=False,
+                    sampler=dict(type='DefaultSampler', shuffle=False),
+                    dataset=dict(
+                        type='CocoDataset',
+                        data_root=data_root,
+                        metainfo=dict(classes=('vessel', ), palette=[(220, 20, 60)]),
+                        ann_file='annotations/test.json',
+                        data_prefix=dict(img='imgs/'),
+                        test_mode=True,
+                        filter_cfg=dict(filter_empty_gt=True),
+                        pipeline=[
+                            dict(
+                                type='LoadImageFromFile',
+                                to_float32=True,
+                                color_type='color',
+                                imdecode_backend='pillow',
+                                backend_args=None),
+                            dict(type='Resize', scale=(2048, 2048), keep_ratio=True),
+                            dict(type='LoadAnnotations', with_bbox=True),
+                            dict(
+                                type='PackDetInputs',
+                                meta_keys=('img', 'img_id', 'img_path', 'img_shape', 'ori_shape', 'scale', 'scale_factor', 'keep_ratio', 'homography_matrix', 'gt_bboxes', 'gt_ignore_flags', 'gt_bboxes_labels'))
+                        ],
+                        backend_args=None))
+
 
 # Init visualizer
 visualizer = VISUALIZERS.build(model.cfg.visualizer)
@@ -161,5 +192,5 @@ for idx in idxs:
     new_name = file_names[idx].replace('.tif','.png')
     savepath = '/home/roberto/PythonProjects/S2RAWVessel/output_results/MS3/'+new_name
     # Draw the bounding boxes on the image
-    draw_bounding_boxes(img, boxes, scores = scores, backend_args=dict(figsize=(20, 20), dpi=100), savepath=savepath, score_threshold=0.5, gt_boxes=gt_boxes)
+    draw_bounding_boxes(img, boxes, scores = scores, backend_args=dict(figsize=(20, 20), dpi=100), savepath=savepath, score_threshold=0.1, gt_boxes=gt_boxes)
     

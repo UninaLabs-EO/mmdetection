@@ -5,7 +5,7 @@ import math
 from typing import List, Optional, Sequence, Tuple, Union
 
 import cv2
-import clahe
+# import clahe
 import mmcv
 import numpy as np
 from mmcv.image.geometric import _scale_size
@@ -126,14 +126,14 @@ class ByteScale:
             print('printing img min and max')
             print(img.min(), img.max())
             
-        elif choice == 2:
-            # grad_clip img
-            img = np.clip(img, 0, 600)
-            im_a = clahe.clahe(img[:,:,2], clip_limit=6, win_shape=(16,16))
-            im_b = clahe.clahe(img[:,:,1], clip_limit=6, win_shape=(16,16))
-            im_c = clahe.clahe(img[:,:,0], clip_limit=6, win_shape=(16,16))
-            correct_format_img = np.dstack((im_a, im_b, im_c))
-            correct_format_img = (correct_format_img - correct_format_img.mean()) / correct_format_img.std()
+        # elif choice == 2:
+        #     # grad_clip img
+        #     img = np.clip(img, 0, 600)
+        #     im_a = clahe.clahe(img[:,:,2], clip_limit=6, win_shape=(16,16))
+        #     im_b = clahe.clahe(img[:,:,1], clip_limit=6, win_shape=(16,16))
+        #     im_c = clahe.clahe(img[:,:,0], clip_limit=6, win_shape=(16,16))
+        #     correct_format_img = np.dstack((im_a, im_b, im_c))
+        #     correct_format_img = (correct_format_img - correct_format_img.mean()) / correct_format_img.std()
         
         elif choice == 3:
             img = np.clip(img, 0, 1000)

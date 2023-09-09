@@ -11,6 +11,7 @@ from mmengine.runner import Runner
 
 from mmdet.utils import setup_cache_size_limit_of_dynamo
 
+from ast import literal_eval
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -48,10 +49,15 @@ def parse_args():
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
+    parser.add_argument('--mean_norm_vals', default=None, help='Mean values to perform normalization')
+    parser.add_argument('--std_norm_vals', default=None, help='Mean values to perform normalization')
+    parser.add_argument('--img_size', default=None, help='Image size to perform normalization')
+    
     # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
     # will pass the `--local-rank` parameter to `tools/train.py` instead
     # of `--local_rank`.
-    parser.add_argument('--run_name', default=None)
+    parser.add_argument('--run_name', default=None, help='W&B run name')
+    parser.add_argument('--project_name', default='Unnamed Project', help='W&B project name')
     parser.add_argument('--local_rank', '--local-rank', type=int, default=0)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
@@ -101,7 +107,7 @@ def main():
     if args.run_name is not None:
         wanb_cfg = dict(type='WandbVisBackend',
                 init_kwargs={
-                    'project': 'S2RAWVessel_v2',
+                    'project': args.project_name,
                     'group': args.run_name,
                 })
 
@@ -122,6 +128,16 @@ def main():
                                '"auto_scale_lr.base_batch_size" in your'
                                ' configuration file.')
 
+    if args.mean_norm_vals is not None:
+        cfg.model.data_preprocessor.mean = [float(x) for x in literal_eval(args.mean_norm_vals)]
+    
+    if args.std_norm_vals is not None:
+        cfg.model.data_preprocessor.std = [float(x) for x in literal_eval(args.std_norm_vals)]
+    
+    if args.img_size is not None:
+        cfg.train_pipeline[2] = dict(type='Resize', scale=int(args.img_size), keep_ratio=True)
+        cfg.test_pipeline[1] = dict(type='Resize', scale=int(args.img_size), keep_ratio=True)
+    
     # resume is determined in this priority: resume from > auto_resume
     if args.resume == 'auto':
         cfg.resume = True

@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/datasets/esa_vessel_detection.py',
-    '../_base_/schedules/schedule_240.py', '../_base_/esa_runtime.py'
+    '../_base_/schedules/schedule_520.py', '../_base_/esa_runtime.py'
 ]
 # model settings
 model = dict(
@@ -18,9 +18,10 @@ model = dict(
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=True),
-        norm_eval=True,
+        norm_eval=False, # from True
         style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+        # init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+        init_cfg=None),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],

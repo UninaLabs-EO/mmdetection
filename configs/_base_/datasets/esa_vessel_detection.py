@@ -4,31 +4,17 @@ data_root = '/home/roberto/PythonProjects/S2RAWVessel/mmdetection/data/S2ESA/'
 
 # Modify dataset related settings
 metainfo = {
-    'classes': ('ship', ),
+    'classes': ('Vessel', ),
     'palette': [
         (220, 20, 60),
     ]
 }
 
-# Method 1: simply set the data root and let the file I/O module
-# automatically infer from prefix (not support LMDB and Memcache yet)
-
-# data_root = 's3://openmmlab/datasets/detection/coco/'
-
-# Method 2: Use `backend_args`, `file_client_args` in versions before 3.0.0rc6
-# backend_args = dict(
-#     backend='petrel',
-#     path_mapping=dict({
-#         './data/': 's3://openmmlab/datasets/detection/',
-#         'data/': 's3://openmmlab/datasets/detection/'
-#     }))
 backend_args = None
-# IMG_SCALE = (2816, 2816)
-IMG_SCALE = (1536, 1536)
-
+IMG_SCALE = (2816, 2816)
 
 train_pipeline = [
-    dict(type='LoadImageFromFile',to_float32=True, color_type='color', imdecode_backend='tifffile', backend_args=backend_args),
+    dict(type='LoadImageFromFile',to_float32=True, color_type='color', imdecode_backend='pillow', backend_args=backend_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
     dict(type='RandomFlip', prob=0.5, direction='horizontal'),
@@ -36,7 +22,7 @@ train_pipeline = [
     dict(type='PackDetInputs')
 ]
 test_pipeline = [
-    dict(type='LoadImageFromFile',to_float32=True, color_type='color', imdecode_backend='tifffile', backend_args=backend_args),
+    dict(type='LoadImageFromFile',to_float32=True, color_type='color', imdecode_backend='pillow', backend_args=backend_args),
     dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
     # If you don't have a gt annotation, delete the pipeline
     dict(type='LoadAnnotations', with_bbox=True),

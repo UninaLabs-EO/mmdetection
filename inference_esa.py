@@ -105,10 +105,10 @@ def get_annotations_from_coco_json(coco_json_file, image_filename):
     return annotations, gt_boxes
 
 # define dataloader 
-loader = LoadImageFromFile(to_float32=False, color_type='color', imdecode_backend='pillow', backend_args=None)
+loader = LoadImageFromFile(to_float32=False, color_type='color', imdecode_backend='tifffile', backend_args=None)
 
 # Specify the path to model config and checkpoint file
-config_file = '/home/roberto/PythonProjects/S2RAWVessel/checkpoints/MS3/vfnet_r50_fpn_1x_ms3/20230911_072256_LR_0.0001_BATCH_6_IMG_2048_MEAN_[200,154,116]_STD_[22,24,27]/vfnet_r50_fpn_1x_ms3.py'
+config_file = '/home/roberto/PythonProjects/S2RAWVessel/checkpoints/S2L1C/vfnet_r101_fpn_1x_esa/20230919_232958_LR_0.0005_BATCH_4_IMG_2816_MEAN_[46,53,51]_STD_[30,34,42]/vfnet_r101_fpn_1x_esa.py'
 foldPath = Path(config_file).parent
 # list all file sin folderpath:
 chkpts = list(foldPath.glob('*.pth'))
@@ -118,7 +118,7 @@ print('Loading checkpoint: ', checkpoint_file)
 # Build the model from a config file and a checkpoint file
 model = init_detector(config_file, checkpoint_file, device='cuda:0')
 
-data_root = '/home/roberto/PythonProjects/S2RAWVessel/mmdetection/data/MS3/'
+data_root = '/home/roberto/PythonProjects/S2RAWVessel/mmdetection/data/S2ESA/'
 model.cfg.test_dataloader = dict(
                     batch_size=1,
                     num_workers=2,
@@ -138,9 +138,9 @@ model.cfg.test_dataloader = dict(
                                 type='LoadImageFromFile',
                                 to_float32=True,
                                 color_type='color',
-                                imdecode_backend='pillow',
+                                imdecode_backend='tiffile',
                                 backend_args=None),
-                            dict(type='Resize', scale=(2048, 2048), keep_ratio=True),
+                            dict(type='Resize', scale=(2816, 2816), keep_ratio=True),
                             dict(type='LoadAnnotations', with_bbox=True),
                             dict(
                                 type='PackDetInputs',
@@ -156,12 +156,12 @@ visualizer = VISUALIZERS.build(model.cfg.visualizer)
 visualizer.dataset_meta = model.dataset_meta
 
 # READ JSON FILE TEST:
-json_file_path = '/home/roberto/PythonProjects/S2RAWVessel/mmdetection/data/MS3/annotations/test.json'
+json_file_path = data_root + '/annotations/test.json'
 json_file = json.load(open(json_file_path))
 imgs = json_file['images']
 
-base_path = '/home/roberto/PythonProjects/S2RAWVessel/mmdetection/data/MS3/imgs/'
-outpath_base = '/home/roberto/PythonProjects/S2RAWVessel/output_results/MS3/'
+base_path = data_root + '/imgs/'
+outpath_base = '/home/roberto/PythonProjects/S2RAWVessel/output_results/S2L1C/'
 
 file_names = [x['file_name'] for x in imgs]
 
@@ -189,8 +189,8 @@ for idx in idxs:
     scores = list(scores.detach().cpu().numpy())
     boxes = list(boxes.detach().cpu().numpy())
 
-    new_name = file_names[idx].replace('.tif','.png')
-    savepath = '/home/roberto/PythonProjects/S2RAWVessel/output_results/MS3/'+new_name
+    new_name = file_names[idx].replace('.tiff','.png')
+    savepath = '/home/roberto/PythonProjects/S2RAWVessel/output_results/S2L1C/'+ new_name
     # Draw the bounding boxes on the image
     draw_bounding_boxes(img, boxes, scores = scores, backend_args=dict(figsize=(20, 20), dpi=100), savepath=savepath, score_threshold=0.5, gt_boxes=gt_boxes)
     

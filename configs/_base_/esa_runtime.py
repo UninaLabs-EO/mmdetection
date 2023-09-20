@@ -17,7 +17,7 @@ env_cfg = dict(
 
 wanb_cfg = dict(type='WandbVisBackend',
                 init_kwargs={
-                    'project': 'MS3',
+                    'project': 'ESA_S2L1C',
                     'group': 'generic_name',
                 })
 

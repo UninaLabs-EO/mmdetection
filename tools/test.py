@@ -53,7 +53,9 @@ def parse_args():
         default='none',
         help='job launcher')
     parser.add_argument('--tta', action='store_true')
-    parser.add_argument('--custom', action='store_true')
+    parser.add_argument('--custom_s2raw', action='store_true', default=False)
+    parser.add_argument('--custom_s2l1c', action='store_true', default=False)
+    parser.add_argument('--custom_ms3', action='store_true', default=True)
     parser.add_argument('--run_name', default=None)
     # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
     # will pass the `--local-rank` parameter to `tools/train.py` instead
@@ -89,10 +91,12 @@ def main():
 
     cfg.load_from = args.checkpoint
 
+
     if args.show or args.show_dir:
         cfg = trigger_visualization_hook(cfg, args)
 
-    if args.custom:
+
+    if args.custom_s2raw:
         cfg.test_dataloader = dict(
                     batch_size=1,
                     num_workers=2,
@@ -133,10 +137,51 @@ def main():
                     ann_file='data/vessels/annotations/test.json',
                     outfile_prefix='./work_dirs/vessel_detection/test')
         
+    if args.custom_ms3:
+        cfg.test_dataloader = dict(
+                    batch_size=1,
+                    num_workers=2,
+                    persistent_workers=True,
+                    drop_last=False,
+                    sampler=dict(type='DefaultSampler', shuffle=False),
+                    dataset=dict(
+                        type='CocoDataset',
+                        data_root='data/MS3/',
+                        metainfo=dict(classes=('Vessel', ), palette=[(220, 20, 60)]),
+                        ann_file='annotations/test.json',
+                        data_prefix=dict(img='imgs/'),
+                        test_mode=True,
+                        filter_cfg=dict(filter_empty_gt=True),
+                        pipeline=[
+                            dict(
+                                type='LoadImageFromFile',
+                                to_float32=True,
+                                color_type='color',
+                                imdecode_backend='pillow',
+                                backend_args=None),
+                            dict(type='Resize', scale=(2048, 2048), keep_ratio=True),
+                            dict(type='LoadAnnotations', with_bbox=True),
+                            dict(
+                                type='PackDetInputs',
+                                meta_keys=('img_path', 'img_id', 'seg_map_path', 
+                                        'height', 'width', 'instances', 'sample_idx', 
+                                        'img', 'img_shape', 'ori_shape', 'scale', 'scale_factor', 
+                                        'keep_ratio', 'homography_matrix', 'gt_bboxes', 'gt_ignore_flags', 
+                                        'gt_bboxes_labels'))
+                        ],
+                        backend_args=None))
+        
+        cfg.test_evaluator = dict(
+                    type='CocoMetric',
+                    metric='bbox',
+                    format_only=False,
+                    ann_file='data/MS3/annotations/test.json',
+                    outfile_prefix='./work_dirs/vessel_detection/test')
+        
         if args.run_name is not None:
             wanb_cfg = dict(type='WandbVisBackend',
                     init_kwargs={
-                        'project': 'S2RAWVessel_TestMode',
+                        'project': 'MS3_test',
                         'group': args.run_name,
                     })
 

@@ -1,6 +1,6 @@
 _base_ = [
     '../_base_/datasets/esa_vessel_detection.py',
-    '../_base_/schedules/schedule_1048.py', '../_base_/esa_runtime.py'
+    '../_base_/schedules/schedule_120.py', '../_base_/esa_runtime.py'
 ]
 
 # model settings
@@ -63,47 +63,3 @@ model = dict(
         score_thr=0.05,
         nms=dict(type='nms', iou_threshold=0.5),
         max_per_img=100))
-
-
-train_dataloader = dict(
-    batch_size=2,
-    num_workers=8,
-    )
-
-
-train_pipeline = [
-    dict(type='Mosaic', img_scale=(2816, 2816), pad_val=114.0),
-    dict(
-        type='RandomAffine',
-        scaling_ratio_range=(0.5, 1.5),
-        border=(-1024, -1024)),
-    dict(
-        type='MixUp',
-        img_scale=(2816, 2816),
-        ratio_range=(0.8, 1.6),
-        pad_val=114.0),
-    dict(type='YOLOXHSVRandomAug'),
-    dict(type='RandomFlip', prob=0.5),
-    dict(type='Resize', scale=(2816, 2816), keep_ratio=True),
-    dict(
-        type='Pad',
-        pad_to_square=True,
-        pad_val=dict(img=(114.0, 114.0, 114.0))),
-    dict(type='FilterAnnotations', min_gt_bbox_wh=(1, 1), keep_empty=False),
-    dict(type='PackDetInputs')
-]
-
-test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        to_float32=True,
-        color_type='color',
-        imdecode_backend='pillow',
-        backend_args=None),
-    dict(type='Resize', scale=(2816, 2816), keep_ratio=True),
-    dict(type='LoadAnnotations', with_bbox=True),
-    dict(
-        type='PackDetInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor'))
-]

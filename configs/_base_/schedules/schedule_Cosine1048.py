@@ -1,7 +1,7 @@
 # training schedule for 1x
 train_cfg = dict(type='EpochBasedTrainLoop', max_epochs=1048, val_interval=1)
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
+val_cfg = dict(type='ValLoop', val_interval=1)
+test_cfg = dict(type='TestLoop', val_interval=1)
 
 # learning rate
 param_scheduler = [

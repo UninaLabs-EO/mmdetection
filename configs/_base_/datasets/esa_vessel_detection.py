@@ -10,27 +10,41 @@ metainfo = {
     ]
 }
 
+
 backend_args = None
-IMG_SCALE = (2816, 2816)
+IMG_SCALE = (1280, 1280)
+
+reader = 'tifffile'
 
 train_pipeline = [
-    dict(type='LoadImageFromFile',to_float32=True, color_type='color', imdecode_backend='pillow', backend_args=backend_args),
+    dict(type='LoadImageFromFile',to_float32=True, color_type='color', imdecode_backend=reader, backend_args=None),
     dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='RandomAffine', scaling_ratio_range=(0.9, 1.1), border=(0,0)),
+    dict(type='RandomFlip', prob=0.4),
+    dict(type='MinIoURandomCrop', bbox_clip_border=True, min_crop_size=0.7, min_ious=(0.7,0.75,0.8,0.85,0.95)),
     dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
-    dict(type='RandomFlip', prob=0.5, direction='horizontal'),
-    dict(type='RandomFlip', prob=0.5, direction='vertical'),
-    dict(type='PackDetInputs')
-]
-test_pipeline = [
-    dict(type='LoadImageFromFile',to_float32=True, color_type='color', imdecode_backend='pillow', backend_args=backend_args),
-    dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
-    # If you don't have a gt annotation, delete the pipeline
-    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='FilterAnnotations', min_gt_bbox_wh=(1, 1), keep_empty=False),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor'))
 ]
+
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        to_float32=True,
+        color_type='color',
+        imdecode_backend=reader,
+        backend_args=None),
+    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='Resize', scale=(2048, 2048), keep_ratio=True),
+    dict(
+        type='PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor'))
+]
+
 train_dataloader = dict(
     batch_size=2,
     num_workers=2,
@@ -38,14 +52,18 @@ train_dataloader = dict(
     sampler=dict(type='DefaultSampler', shuffle=True),
     batch_sampler=dict(type='AspectRatioBatchSampler'),
     dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        metainfo=metainfo,
-        ann_file='annotations/train.json',
-        data_prefix=dict(img='imgs/'),
-        filter_cfg=dict(filter_empty_gt=True), # , min_size=32
-        pipeline=train_pipeline,
-        backend_args=backend_args))
+        type = 'RepeatDataset',
+        times = 50,
+        dataset=dict(
+            type=dataset_type,
+            data_root=data_root,
+            metainfo=metainfo,
+            ann_file='annotations/train.json',
+            data_prefix=dict(img='imgs/'),
+            filter_cfg=dict(filter_empty_gt=True), # , min_size=32
+            pipeline=train_pipeline,
+            backend_args=backend_args)))
+
 val_dataloader = dict(
     batch_size=1,
     num_workers=2,
@@ -61,6 +79,7 @@ val_dataloader = dict(
         test_mode=True,
         pipeline=test_pipeline,
         backend_args=backend_args))
+
 # format the output results for submission.
 test_dataloader = dict(
     batch_size=1,

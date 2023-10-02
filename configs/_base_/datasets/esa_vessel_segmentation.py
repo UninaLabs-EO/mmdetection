@@ -17,8 +17,7 @@ reader = 'tifffile'
 
 train_pipeline = [
     dict(type='LoadImageFromFile',to_float32=False, color_type='color', imdecode_backend=reader, backend_args=None),
-    dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='RandomAffine', scaling_ratio_range=(0.9, 1.1), border=(0,0)),
+    dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
     dict(type='RandomFlip', prob=0.4),
     dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
     dict(type='FilterAnnotations', min_gt_bbox_wh=(1, 1), keep_empty=False),
@@ -29,13 +28,8 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        to_float32=False,
-        color_type='color',
-        imdecode_backend=reader,
-        backend_args=None),
-    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='LoadImageFromFile', to_float32=False, color_type='color', imdecode_backend=reader, backend_args=None),
+    dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
     dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
     dict(
         type='PackDetInputs',

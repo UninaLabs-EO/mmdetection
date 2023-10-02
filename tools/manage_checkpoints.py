@@ -10,7 +10,7 @@ import logging
 
 
 
-def run_inference(config_file, checkpoint_file, workdir):
+def run_inference(config_file, checkpoint_file, workdir, custom_mode):
     out = os.path.join(workdir, "inference_results.pkl")
     output_dir = os.path.join(workdir, "inference")
 
@@ -23,7 +23,7 @@ def run_inference(config_file, checkpoint_file, workdir):
         '--work-dir', workdir, 
         '--out', out, 
         '--show-dir', output_dir,
-        '--custom',
+        custom_mode,
         '--run_name={}_TEST'.format(model_name)
     ]
     subprocess.run(command, check=True)
@@ -137,6 +137,7 @@ def plot_checkpoints(workdir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--workdir', type=str)
+    parser.add_argument('--custom_mode', type=str)
     args = parser.parse_args()
     # prepare the logger
     logger = logging.getLogger(__name__)
@@ -175,7 +176,7 @@ if __name__ == "__main__":
             checkpoint_file = str(checkpoint_file)
             # run inference
             print("Running inference...")
-            run_inference(config_file, checkpoint_file, args.workdir)
+            run_inference(config_file, checkpoint_file, args.workdir, args.custom_mode)
         else:
             print("No checkpoint file found!")
 

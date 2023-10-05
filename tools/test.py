@@ -54,8 +54,8 @@ def parse_args():
         help='job launcher')
     parser.add_argument('--tta', action='store_true')
     parser.add_argument('--custom_s2raw', action='store_true', default=False)
-    parser.add_argument('--custom_s2l1c', action='store_true', default=False)
-    parser.add_argument('--custom_ms3', action='store_true', default=True)
+    parser.add_argument('--custom_s2l1c', action='store_true', default=True)
+    parser.add_argument('--custom_ms3', action='store_true', default=False)
     parser.add_argument('--run_name', default=None)
     # When using PyTorch version >= 2.0.0, the `torch.distributed.launch`
     # will pass the `--local-rank` parameter to `tools/train.py` instead
@@ -96,7 +96,102 @@ def main():
         cfg = trigger_visualization_hook(cfg, args)
 
 
-    if args.custom_s2raw:
+    # if args.custom_s2raw:
+    #     cfg.test_dataloader = dict(
+    #                 batch_size=1,
+    #                 num_workers=2,
+    #                 persistent_workers=True,
+    #                 drop_last=False,
+    #                 sampler=dict(type='DefaultSampler', shuffle=False),
+    #                 dataset=dict(
+    #                     type='CocoDataset',
+    #                     data_root='data/vessels/',
+    #                     metainfo=dict(classes=('vessel', ), palette=[(220, 20, 60)]),
+    #                     ann_file='annotations/test.json',
+    #                     data_prefix=dict(img='imgs/'),
+    #                     test_mode=True,
+    #                     filter_cfg=dict(filter_empty_gt=True),
+    #                     pipeline=[
+    #                         dict(
+    #                             type='LoadImageFromFile',
+    #                             to_float32=True,
+    #                             color_type='color',
+    #                             imdecode_backend='tifffile',
+    #                             backend_args=None),
+    #                         dict(type='Resize', scale=(2048, 2048), keep_ratio=True),
+    #                         dict(type='LoadAnnotations', with_bbox=True),
+    #                         dict(
+    #                             type='PackDetInputs',
+    #                             meta_keys=('img_path', 'img_id', 'seg_map_path', 
+    #                                     'height', 'width', 'instances', 'sample_idx', 
+    #                                     'img', 'img_shape', 'ori_shape', 'scale', 'scale_factor', 
+    #                                     'keep_ratio', 'homography_matrix', 'gt_bboxes', 'gt_ignore_flags', 
+    #                                     'gt_bboxes_labels'))
+    #                     ],
+    #                     backend_args=None))
+        
+    #     cfg.test_evaluator = dict(
+    #                 type='CocoMetric',
+    #                 metric='bbox',
+    #                 format_only=False,
+    #                 ann_file='data/vessels/annotations/test.json',
+    #                 outfile_prefix='./work_dirs/vessel_detection/test')
+        
+    # if args.custom_ms3:
+    #     cfg.test_dataloader = dict(
+    #                 batch_size=1,
+    #                 num_workers=2,
+    #                 persistent_workers=True,
+    #                 drop_last=False,
+    #                 sampler=dict(type='DefaultSampler', shuffle=False),
+    #                 dataset=dict(
+    #                     type='CocoDataset',
+    #                     data_root='data/MS3/',
+    #                     metainfo=dict(classes=('Vessel', ), palette=[(220, 20, 60)]),
+    #                     ann_file='annotations/test.json',
+    #                     data_prefix=dict(img='imgs/'),
+    #                     test_mode=True,
+    #                     filter_cfg=dict(filter_empty_gt=True),
+    #                     pipeline=[
+    #                         dict(
+    #                             type='LoadImageFromFile',
+    #                             to_float32=True,
+    #                             color_type='color',
+    #                             imdecode_backend='pillow',
+    #                             backend_args=None),
+    #                         dict(type='Resize', scale=(2048, 2048), keep_ratio=True),
+    #                         dict(type='LoadAnnotations', with_bbox=True),
+    #                         dict(
+    #                             type='PackDetInputs',
+    #                             meta_keys=('img_path', 'img_id', 'seg_map_path', 
+    #                                     'height', 'width', 'instances', 'sample_idx', 
+    #                                     'img', 'img_shape', 'ori_shape', 'scale', 'scale_factor', 
+    #                                     'keep_ratio', 'homography_matrix', 'gt_bboxes', 'gt_ignore_flags', 
+    #                                     'gt_bboxes_labels'))
+    #                     ],
+    #                     backend_args=None))
+        
+    #     cfg.test_evaluator = dict(
+    #                 type='CocoMetric',
+    #                 metric='bbox',
+    #                 format_only=False,
+    #                 ann_file='data/MS3/annotations/test.json',
+    #                 outfile_prefix='./work_dirs/vessel_detection/test')
+        
+        if args.run_name is not None:
+            wanb_cfg = dict(type='WandbVisBackend',
+                    init_kwargs={
+                        'project': 'MS3_test',
+                        'group': args.run_name,
+                    })
+
+            vis_backends = [dict(type='LocalVisBackend'),
+                            wanb_cfg]
+            cfg.visualizer = dict(
+                type='DetLocalVisualizer', vis_backends=vis_backends, name='visualizer')
+            
+            
+    if args.custom_s2l1c:
         cfg.test_dataloader = dict(
                     batch_size=1,
                     num_workers=2,
@@ -105,48 +200,7 @@ def main():
                     sampler=dict(type='DefaultSampler', shuffle=False),
                     dataset=dict(
                         type='CocoDataset',
-                        data_root='data/vessels/',
-                        metainfo=dict(classes=('vessel', ), palette=[(220, 20, 60)]),
-                        ann_file='annotations/test.json',
-                        data_prefix=dict(img='imgs/'),
-                        test_mode=True,
-                        filter_cfg=dict(filter_empty_gt=True),
-                        pipeline=[
-                            dict(
-                                type='LoadImageFromFile',
-                                to_float32=True,
-                                color_type='color',
-                                imdecode_backend='tifffile',
-                                backend_args=None),
-                            dict(type='Resize', scale=(2048, 2048), keep_ratio=True),
-                            dict(type='LoadAnnotations', with_bbox=True),
-                            dict(
-                                type='PackDetInputs',
-                                meta_keys=('img_path', 'img_id', 'seg_map_path', 
-                                        'height', 'width', 'instances', 'sample_idx', 
-                                        'img', 'img_shape', 'ori_shape', 'scale', 'scale_factor', 
-                                        'keep_ratio', 'homography_matrix', 'gt_bboxes', 'gt_ignore_flags', 
-                                        'gt_bboxes_labels'))
-                        ],
-                        backend_args=None))
-        
-        cfg.test_evaluator = dict(
-                    type='CocoMetric',
-                    metric='bbox',
-                    format_only=False,
-                    ann_file='data/vessels/annotations/test.json',
-                    outfile_prefix='./work_dirs/vessel_detection/test')
-        
-    if args.custom_ms3:
-        cfg.test_dataloader = dict(
-                    batch_size=1,
-                    num_workers=2,
-                    persistent_workers=True,
-                    drop_last=False,
-                    sampler=dict(type='DefaultSampler', shuffle=False),
-                    dataset=dict(
-                        type='CocoDataset',
-                        data_root='data/MS3/',
+                        data_root='data/S2ESA/',
                         metainfo=dict(classes=('Vessel', ), palette=[(220, 20, 60)]),
                         ann_file='annotations/test.json',
                         data_prefix=dict(img='imgs/'),
@@ -155,11 +209,11 @@ def main():
                         pipeline=[
                             dict(
                                 type='LoadImageFromFile',
-                                to_float32=True,
+                                to_float32=False,
                                 color_type='color',
-                                imdecode_backend='pillow',
+                                imdecode_backend='tifffile',
                                 backend_args=None),
-                            dict(type='Resize', scale=(2048, 2048), keep_ratio=True),
+                            dict(type='Resize', scale=(512, 512), keep_ratio=False),
                             dict(type='LoadAnnotations', with_bbox=True),
                             dict(
                                 type='PackDetInputs',
@@ -175,13 +229,13 @@ def main():
                     type='CocoMetric',
                     metric='bbox',
                     format_only=False,
-                    ann_file='data/MS3/annotations/test.json',
+                    ann_file='data/S2ESA/annotations/test.json',
                     outfile_prefix='./work_dirs/vessel_detection/test')
         
         if args.run_name is not None:
             wanb_cfg = dict(type='WandbVisBackend',
                     init_kwargs={
-                        'project': 'MS3_test',
+                        'project': 'S2ESA_test',
                         'group': args.run_name,
                     })
 

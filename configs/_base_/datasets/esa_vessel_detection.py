@@ -12,7 +12,7 @@ metainfo = {
 
 
 backend_args = None
-IMG_SCALE = (256, 256)
+IMG_SCALE = (512, 512)
 reader = 'tifffile'
 
 train_pipeline = [

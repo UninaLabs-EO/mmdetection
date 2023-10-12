@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'CocoDataset'
-data_root = '/home/roberto/PythonProjects/S2RAWVessel/mmdetection/data/S2ESA/'
+data_root = '/home/roberto/PythonProjects/S2RAWVessel/mmdetection/data/Venus/'
 
 # Modify dataset related settings
 metainfo = {
@@ -12,14 +12,15 @@ metainfo = {
 
 
 backend_args = None
-IMG_SCALE = (1024, 1024)
+IMG_SCALE = (2304, 2304)
 reader = 'tifffile'
 
 train_pipeline = [
     dict(type='LoadImageFromFile',to_float32=False, color_type='color', imdecode_backend=reader, backend_args=None),
-    dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
-    dict(type='RandomFlip', prob=0.5),
+    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='RandomFlip', prob=0.4),
     dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
+    dict(type='Pad', pad_shape=IMG_SCALE),
     dict(type='FilterAnnotations', min_gt_bbox_wh=(1, 1), keep_empty=False),
     dict(
         type='PackDetInputs',
@@ -28,8 +29,8 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', to_float32=False, color_type='color', imdecode_backend=reader, backend_args=None),
-    dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
+    dict(type='LoadImageFromFile',to_float32=False, color_type='color', imdecode_backend=reader, backend_args=None),
+    dict(type='LoadAnnotations', with_bbox=True),
     dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
     dict(
         type='PackDetInputs',
@@ -45,7 +46,7 @@ train_dataloader = dict(
     batch_sampler=dict(type='AspectRatioBatchSampler'),
     dataset=dict(
         type = 'RepeatDataset',
-        times = 1,
+        times = 2,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,

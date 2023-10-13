@@ -27,6 +27,8 @@ except ImportError:
     skimage = None
 
 
+
+
 @MODELS.register_module()
 class DetDataPreprocessor(ImgDataPreprocessor):
     """Image pre-processor for detection tasks.
@@ -206,6 +208,59 @@ class DetDataPreprocessor(ImgDataPreprocessor):
                     mode='constant',
                     value=self.seg_pad_value)
                 data_samples.gt_sem_seg = PixelData(sem_seg=gt_sem_seg)
+
+
+
+@MODELS.register_module()
+class DetDataPreprocessor12Ch(DetDataPreprocessor):
+    """Image pre-processor for detection tasks with 12 channels.
+
+    It provides similar functionality to DetDataPreprocessor but is adjusted to handle
+    12 channel input images.
+
+    Args:
+        mean (Sequence[Number], optional): The pixel mean of 12 channels.
+            Defaults to None.
+        std (Sequence[Number], optional): The pixel standard deviation of
+            12 channels. Defaults to None.
+        ... [rest of the arguments are similar]
+    """
+    
+    def __init__(self,
+                 mean: Sequence[Number] = None,
+                 std: Sequence[Number] = None,
+                 pad_size_divisor: int = 1,
+                 pad_value: Union[float, int] = 0,
+                 pad_mask: bool = False,
+                 mask_pad_value: int = 0,
+                 pad_seg: bool = False,
+                 seg_pad_value: int = 255,
+                 bgr_to_rgb: bool = False,
+                 rgb_to_bgr: bool = False,
+                 boxtype2tensor: bool = True,
+                 non_blocking: Optional[bool] = False,
+                 batch_augments: Optional[List[dict]] = None):
+        if mean is not None and len(mean) != 12:
+            raise ValueError("Expected mean for 12 channels, but got a different size.")
+        if std is not None and len(std) != 12:
+            raise ValueError("Expected std for 12 channels, but got a different size.")
+        
+        super().__init__(
+            mean=mean,
+            std=std,
+            pad_size_divisor=pad_size_divisor,
+            pad_value=pad_value,
+            bgr_to_rgb=bgr_to_rgb,
+            rgb_to_bgr=rgb_to_bgr,
+            non_blocking=non_blocking)
+
+    # The rest of the methods remain unchanged, 
+    # as the number of channels is mostly agnostic to the data processing steps.
+
+
+
+
+
 
 
 @MODELS.register_module()

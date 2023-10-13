@@ -10,17 +10,16 @@ metainfo = {
     ]
 }
 
-
 backend_args = None
 IMG_SCALE = (2304, 2304)
 reader = 'tifffile'
+color_type='color' # 'grayscale' or 'color'
 
 train_pipeline = [
-    dict(type='LoadImageFromFile',to_float32=False, color_type='color', imdecode_backend=reader, backend_args=None),
+    dict(type='LoadImageFromFile',to_float32=False, color_type=color_type, imdecode_backend=reader, backend_args=None),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='RandomFlip', prob=0.4),
     dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
-    dict(type='Pad', pad_shape=IMG_SCALE),
     dict(type='FilterAnnotations', min_gt_bbox_wh=(1, 1), keep_empty=False),
     dict(
         type='PackDetInputs',
@@ -29,7 +28,7 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFile',to_float32=False, color_type='color', imdecode_backend=reader, backend_args=None),
+    dict(type='LoadImageFromFile',to_float32=False, color_type=color_type, imdecode_backend=reader, backend_args=None),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='Resize', scale=IMG_SCALE, keep_ratio=True),
     dict(
@@ -103,4 +102,4 @@ test_evaluator = dict(
     metric='bbox',
     format_only=True,
     ann_file=data_root + 'annotations/test.json',
-    outfile_prefix='./work_dirs/esa_v2_detection/test_results/')
+    outfile_prefix='./work_dirs/test_Venus')

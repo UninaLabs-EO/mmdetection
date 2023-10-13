@@ -129,7 +129,7 @@ class DetVisualizationHook(Hook):
 
             img_path = data_sample.img_path
             img_bytes = get(img_path, backend_args=self.backend_args)
-            img = mmcv.imfrombytes(img_bytes, channel_order='rgb')
+            img = mmcv.imfrombytes(img_bytes, flag='color', channel_order='bgr')
 
             out_file = None
             if self.test_out_dir is not None:

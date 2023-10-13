@@ -38,6 +38,79 @@ except ImportError:
 Number = Union[int, float]
 
 
+@TRANSFORMS.register_module()
+class NDWI:
+    """Calculate the Normalized Difference Water Index (NDWI) for remote sensing images.
+
+    This transform calculates the NDWI based on the formula:
+    NDWI = (Green - NIR) / (Green + NIR)
+
+    Required Keys:
+    - img (np.array): the input image.
+
+    Modified Keys:
+    - img (np.array): the NDWI computed image.
+
+    Args:
+        green_band (int): Index of the green band in the image. Defaults to 1.
+        nir_band (int): Index of the NIR band in the image. Defaults to 2.
+    """
+    
+    def __init__(self, green_band=1, nir_band=2):
+        self.green_band = green_band
+        self.nir_band = nir_band
+
+    @staticmethod
+    def calculate_ndwi(image):
+        """
+        Calculate NDWI (Normalized Difference Water Index) for a given image. (Green - NIR) / (Green + NIR)
+
+        Green band: This usually falls within the range of approximately 500 to 600 nm. For instance, for the Landsat 8 OLI sensor, the Green band is specifically from 530 to 590 nm.
+        Near-Infrared (NIR) band: This usually falls within the range of approximately 750 to 900 nm. For the Landsat 8 OLI sensor, the NIR band is specifically from 850 to 880 nm.
+        
+        
+        Args:
+            image (np.array): A 16-bit image.
+
+        Returns:
+            np.array: The NDWI image, with pixel values scaled between 0 and 1.
+        """
+        # Convert the image to float32
+        image = image.astype(np.float32)
+
+        # Calculate the NDWI
+        
+        Green = image[:,:,3] # 4th Band
+        NIR = image[:,:,10] #11th Band
+        
+        ndwi = np.zeros_like(Green)
+
+        for i in range(Green.shape[0]):
+            for j in range(Green.shape[1]):
+                if Green[i,j] + NIR[i,j] == 0:
+                    ndwi[i,j] = 0
+                else:
+                    ndwi[i,j] = (Green[i,j] - NIR[i,j]) / (Green[i,j] + NIR[i,j])
+
+        return ndwi
+
+    def __call__(self, results):
+        img = results['img']
+
+        # Compute NDWI
+        self.ndwi = self.calculate_ndwi(img)  # 1e-6 is added to avoid division by zero
+
+        results['img'] = np.expand_dims(self.ndwi , axis=2)
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'ndwi={self.ndwi})'
+        return repr_str
+
+
+
+
 
 @TRANSFORMS.register_module()
 class ByteScale:

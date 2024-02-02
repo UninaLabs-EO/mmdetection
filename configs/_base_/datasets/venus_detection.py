@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'CocoDataset'
-data_root = '/home/roberto/PythonProjects/S2RAWVessel/mmdetection/data/Venus/'
+data_root = '/home/roberto/PythonProjects/MMDetectors/mmdetection/data/Venus/'
 
 # Modify dataset related settings
 metainfo = {
